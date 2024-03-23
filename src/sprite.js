@@ -1,3 +1,4 @@
+import { _Polygon } from "./polygon.js"
 import _Vector2D from "./vector.js"
 import { Viewport, World } from "./world.js"
 
@@ -5,7 +6,7 @@ const NS_SVG = 'http://www.w3.org/2000/svg'
 
 let CreateAnimatedSprite = options => {
     return new _AnimatedSprite(
-        options.position, 
+        options.position,
         options.dimension,
         options.offset,
         options.texture,
@@ -25,14 +26,25 @@ let CreateLine = options => {
     )
 }
 
+let CreateShape = options => {
+    return new _Shape(
+        options.position,
+        options.dimension,
+        options.offset,
+        options.points,
+        options.style,
+    )
+}
+
 class _Sprite {
-    position = { x: 0, y: 0, }
+    position = null
     rotation = 0
-    offset = { x: 0, y: 0, }
+    offset = { x: 1, y: 1, }
     dimension = { width: 0, height: 0, }
-    scale = 0.2
+    scale = 1
     visible = true
     timestamp = null
+    drawn = false
 
     constructor(
         position,
@@ -43,6 +55,14 @@ class _Sprite {
         this.dimension = dimension || this.dimension
         this.offset = offset || this.offset
         this.timestamp = World.time
+    }
+    
+    Draw() {
+
+    }
+
+    Clear() {
+
     }
 }
 
@@ -113,14 +133,12 @@ class _AnimatedSprite extends _Sprite {
     }
 }
 
-class _Line extends _Sprite {
-    points = [
-        new _Vector2D,
-        new _Vector2D,
-    ]
-    line = null
-    style = 'stroke: white; stroke-width: 1'
-
+class _Shape extends _Sprite {
+    path = null
+    style = 'stroke: white; stroke-width: 1; fill: transparent;'
+    body = null
+    #points = []
+    
     constructor(
         position,
         dimension,
@@ -130,27 +148,55 @@ class _Line extends _Sprite {
     ) {
         super(position, dimension, offset)
 
-        this.points = points || this.points
+        this.body = new _Polygon(...points)
+        this.body.Move(this.position)
+
         this.style = style || this.style
 
-        this.line = document.createElementNS(NS_SVG, 'line')
-        this.line.setAttribute('x1', this.points[0].x)
-        this.line.setAttribute('y1', this.points[0].y)
-        this.line.setAttribute('x2', this.points[1].x)
-        this.line.setAttribute('y2', this.points[1].y)
-        this.line.setAttribute('style', this.style)
-        Viewport.view.appendChild(this.line)
+        this.path = document.createElementNS(NS_SVG, 'path')
+        this.#DrawPath()
+        Viewport.view.appendChild(this.path)
+        this.drawn = true
     }
 
     Draw() {
-        this.line.setAttribute('x1', this.points[0].x)
-        this.line.setAttribute('y1', this.points[0].y)
-        this.line.setAttribute('x2', this.points[1].x)
-        this.line.setAttribute('y2', this.points[1].y)
+        if (this.drawn === false) Viewport.view.appendChild(this.path)
+        this.#points = this.body.vertices
+        this.#DrawPath()
+        this.path.setAttribute('style', this.style)
+        this.body.Move(this.position)
+    }
+
+    #DrawPath() {
+        if (this.#points.length <= 0) return ''
+        
+        let i = 0
+        let x = (this.#points[i].x * this.scale)
+        let y = (this.#points[i].y * this.scale)
+
+        let data = `M ${x},${y} `
+        i++
+
+        while (i < this.#points.length) {
+            x = (this.#points[i].x * this.scale)
+            y = (this.#points[i].y * this.scale)
+            data += `L ${x},${y} `
+            i++
+        }
+
+        data += 'z'
+
+        this.path.setAttribute('d', data)
+    }
+
+    Clear() {
+        this.drawn = false
+        Viewport.view.removeChild(this.path)
     }
 }
 
 export {
     CreateAnimatedSprite,
     CreateLine,
+    CreateShape,
 }

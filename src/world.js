@@ -1,11 +1,13 @@
+import { PointDirection, PointDistance } from "./math.js"
 import _Vector2D from "./vector.js"
 
 class _World {
     time = 0
     gravity = 0
+    delta = 0
     dimension = {
-        width: 5000,
-        height: 5000
+        width   : 5000,
+        height  : 5000,
     }
 }
 
@@ -16,7 +18,10 @@ class _Viewport {
         height: 700,
     }
     #cursor = {
-        position: new _Vector2D
+        prevPos: new _Vector2D,
+        position: new _Vector2D,
+        direction: 0,
+        speed: 0,
     }
     
     constructor() {
@@ -28,11 +33,21 @@ class _Viewport {
         document.body.setAttribute('style', 'display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden')
         document.body.appendChild(this.view)
 
+        let box = this.view.getBoundingClientRect()
+        // set the initial cursor position
+        this.#cursor.position.x = this.#cursor.prevPos.x = 0 - box.left
+        this.#cursor.position.y = this.#cursor.prevPos.y = 0 - box.top
+
         // keep track of the mouse cursor position
         document.addEventListener('mousemove', e => {
-            const pos = this.view.getBoundingClientRect()
-            this.#cursor.position.x = e.pageX - pos.left
-            this.#cursor.position.y = e.pageY - pos.top
+            box = this.view.getBoundingClientRect()
+            const position = new _Vector2D(e.pageX - box.left, e.pageY - box.top)
+            this.#cursor.direction = PointDirection(this.#cursor.prevPos, position)
+            this.#cursor.speed = PointDistance(this.#cursor.prevPos, position)
+            this.#cursor.position.Move(this.#cursor.speed, this.#cursor.direction)
+
+            // update the previous cursor position
+            this.#cursor.prevPos = position
         })
     }
 

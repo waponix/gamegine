@@ -1,50 +1,92 @@
 import _Vector2D from "./vector.js"
 
-let PointDistance = (vectorFrom, vectorTo) => {
+const DotProduct = (point1, point2) => {
+    return point2.x * point1.x + point2.y * point1.y
+}
+
+const PointMagnitude = point => {
+    return point.x * point.x + point.y * point.y
+}
+
+const PointDistance = (vectorFrom, vectorTo) => {
     let x = vectorTo.x - vectorFrom.x
     let y = vectorTo.y - vectorFrom.y
-    return Math.sqrt((x * x) + (y * y))
+    return Math.sqrt(PointMagnitude({x, y}))
 }
 
 // returns angle in radian
-let PointDirection = (vectorFrom, vectorTo) => {
+const PointDirection = (vectorFrom, vectorTo) => {
     let x = vectorTo.x - vectorFrom.x
     let y = vectorTo.y - vectorFrom.y
     return Math.atan2(y, x)
 }
 
-// get the point where two lines intersect
-let PointIntersect = (line1, line2) => {
-    const [p1, p2] = line1;
-    const [p3, p4] = line2;
+const ReflectionAngle = (incidentAngle, vector1, vector2) => {
+    // Calculate the angle of the line
+    const lineAngle = Math.atan2(vector2.y - vector1.y, vector2.x - vector1.x)
     
-    const det = (p2.x - p1.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p2.y - p1.y)
-    const lambda = ((p4.y - p3.y) * (p4.x - p1.x) + (p3.x - p4.x) * (p4.y - p1.y)) / det
-    const gamma = ((p1.y - p2.y) * (p4.x - p1.x) + (p2.x - p1.x) * (p4.y - p1.y)) / det
+    // Calculate the angle between the direction vector and the line
+    const angleDifference = incidentAngle - lineAngle
 
-    if (0 < lambda && lambda < 1 && 0 < gamma && gamma < 1) {
-        // Lines intersect within the range of their endpoints
-        const x = p1.x + lambda * (p2.x - p1.x)
-        const y = p1.y + lambda * (p2.y - p1.y)
-        return new _Vector2D(x, y)
-    } else {
-        // Lines do not intersect within the range of their endpoints
-        return null
-    }
+    // Calculate the reflected angle
+    const reflectedAngle = incidentAngle - 2 * angleDifference
+    
+    // Ensure the reflected angle is within [0, 2 * Math.PI] range
+    return (reflectedAngle + 2 * Math.PI) % (2 * Math.PI)
 }
 
+// const ReflectionAngle = (incidentAngle, startPoint, endPoint, lineOrientationAngle) => {
+//     // Calculate the angle of the line
+//     const lineAngle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+    
+//     // Calculate the angle between the direction vector and the line
+//     const angleDifference = incidentAngle - lineAngle;
+
+//     // Calculate the reflected angle
+//     let reflectedAngle = incidentAngle - 2 * angleDifference;
+    
+//     // Normalize the angle to [0, 2 * Math.PI] range
+//     reflectedAngle = normalizeAngle(reflectedAngle);
+
+//     // Adjust the reflected angle relative to the line orientation angle
+//     reflectedAngle += lineOrientationAngle;
+
+//     // Normalize the adjusted angle again
+//     reflectedAngle = normalizeAngle(reflectedAngle);
+
+//     return reflectedAngle;
+// }
+
+// const normalizeAngle = angle => {
+//     return (angle + 2 * Math.PI) % (2 * Math.PI);
+// }
+
 // returns a vector value based on the distance and angle
-let MovePoint = (distance, angle) => new _Vector2D(distance * Math.cos(angle), distance * Math.sin(angle))
+const DistanceToPoint = (distance, angle) => new _Vector2D(distance * Math.cos(angle), distance * Math.sin(angle))
 
-let DegToRad = deg => deg * (Math.PI / 180)
+const DegToRad = deg => deg * (Math.PI / 180)
 
-let RadToDeg = (rad) => rad / Math.PI * 180
+const RadToDeg = rad => rad / Math.PI * 180
+
+// Gives the opposite direction or angle of a given angle;
+// Where angle is a value in radian;
+// Returns an opposite angle value in radian;
+const OppositeDirection = angle => {
+    // Calculate the opposite direction using trigonometry
+    var oppositeX = Math.cos(angle + Math.PI)
+    var oppositeY = Math.sin(angle + Math.PI)
+
+    return PointDirection(new _Vector2D, new _Vector2D(oppositeX, oppositeY))
+}
 
 export {
     PointDistance,
     PointDirection,
-    PointIntersect,
-    MovePoint,
+    PointMagnitude,
+    DistanceToPoint,
     DegToRad,
+    DotProduct,
     RadToDeg,
+    ReflectionAngle,
+    OppositeDirection,
 }

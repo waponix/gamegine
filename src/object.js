@@ -37,7 +37,7 @@ class _Entity {
     }
 
     Init() {}
-
+d
     Update () {}
 
     Draw() {
